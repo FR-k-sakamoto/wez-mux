@@ -1,0 +1,28 @@
+workspace: multi-agent
+layout:
+  rows:
+    - panes:
+        - label: orchestrator
+          model: opus
+          skill: agent-orchestrator
+          percent: 33
+        - label: analyzer
+          model: sonnet
+          skill: agent-analyzer
+          percent: 33
+        - label: designer
+          model: opus
+          skill: agent-designer
+          percent: 34
+    - panes:
+        - label: coder
+          model: sonnet
+          skill: agent-coder
+          codex: true
+          percent: 50
+        - label: tester
+          model: haiku
+          skill: agent-tester
+          codex: true
+          percent: 50
+  row_ratio: [50, 50]
