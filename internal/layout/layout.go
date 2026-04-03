@@ -60,9 +60,9 @@ func buildStartCommand(model, label, skill, runtime string) string {
 
 	if runtime == "codex" {
 		cmd := "codex --full-auto"
-		// Pass SKILL.md content as initial prompt via shell expansion
+		// Send SKILL.md as role context with explicit wait instruction
 		if skillPath != "" {
-			cmd += fmt.Sprintf(` "$(cat %s)"`, skillPath)
+			cmd += fmt.Sprintf(` "以下はあなたのロール定義です。内容を理解して待機してください。タスクは別途送信されます。何もせず待ってください。\n\n$(cat %s)"`, skillPath)
 		}
 		return cmd
 	}
