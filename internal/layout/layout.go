@@ -24,8 +24,26 @@ type Plan struct {
 var requiredLabels = []string{"analyzer", "designer", "coder", "tester"}
 
 // skillFilePath returns the absolute path to a skill's SKILL.md.
-// Checks ~/.claude/skills/<skill>/SKILL.md first.
+// Search order:
+//  1. .agent/skills/<skill>/SKILL.md (relative to wez-mux binary or cwd)
+//  2. ~/.claude/skills/<skill>/SKILL.md
 func skillFilePath(skill string) string {
+	// 1. Check .agent/skills/ relative to executable
+	if exe, err := os.Executable(); err == nil {
+		path := filepath.Join(filepath.Dir(exe), ".agent", "skills", skill, "SKILL.md")
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	// Also check cwd
+	if cwd, err := os.Getwd(); err == nil {
+		path := filepath.Join(cwd, ".agent", "skills", skill, "SKILL.md")
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+
+	// 2. Fallback to ~/.claude/skills/
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
