@@ -16,12 +16,12 @@ layout:
           percent: 34
     - panes:
         - label: coder
-          model: sonnet
+          model: o3-mini
           skill: agent-coder
           codex: true
           percent: 50
         - label: tester
-          model: haiku
+          model: o3-mini
           skill: agent-tester
           codex: true
           percent: 50

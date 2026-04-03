@@ -55,10 +55,25 @@ func skillFilePath(skill string) string {
 	return ""
 }
 
-func buildStartCommand(model, label, skill string) string {
+func buildStartCommand(model, label, skill, runtime string) string {
+	skillPath := skillFilePath(skill)
+
+	if runtime == "codex" {
+		cmd := "codex --full-auto"
+		if model != "" {
+			cmd += fmt.Sprintf(" --model %s", model)
+		}
+		// Pass SKILL.md content as initial prompt via shell expansion
+		if skillPath != "" {
+			cmd += fmt.Sprintf(` "$(cat %s)"`, skillPath)
+		}
+		return cmd
+	}
+
+	// Claude Code
 	cmd := fmt.Sprintf("claude --model %s --name %s --permission-mode auto", model, label)
-	if path := skillFilePath(skill); path != "" {
-		cmd += fmt.Sprintf(" --append-system-prompt-file %s", path)
+	if skillPath != "" {
+		cmd += fmt.Sprintf(" --append-system-prompt-file %s", skillPath)
 	}
 	return cmd
 }
@@ -70,7 +85,7 @@ func BuildPlan(cfg config.Config) (Plan, error) {
 			Model:        "opus",
 			Skill:        "agent-orchestrator",
 			Runtime:      "claude-code",
-			StartCommand: buildStartCommand("opus", "orchestrator", "agent-orchestrator"),
+			StartCommand: buildStartCommand("opus", "orchestrator", "agent-orchestrator", "claude-code"),
 		},
 	}
 
@@ -89,7 +104,7 @@ func BuildPlan(cfg config.Config) (Plan, error) {
 
 		runtime := "claude-code"
 		if pane.Codex {
-			runtime = "claude-code+codex"
+			runtime = "codex"
 		}
 
 		specs[label] = PaneSpec{
@@ -97,7 +112,7 @@ func BuildPlan(cfg config.Config) (Plan, error) {
 			Model:        pane.Model,
 			Skill:        pane.Skill,
 			Runtime:      runtime,
-			StartCommand: buildStartCommand(pane.Model, label, pane.Skill),
+			StartCommand: buildStartCommand(pane.Model, label, pane.Skill, runtime),
 		}
 	}
 
