@@ -60,9 +60,6 @@ func buildStartCommand(model, label, skill, runtime string) string {
 
 	if runtime == "codex" {
 		cmd := "codex --full-auto"
-		if model != "" {
-			cmd += fmt.Sprintf(" --model %s", model)
-		}
 		// Pass SKILL.md content as initial prompt via shell expansion
 		if skillPath != "" {
 			cmd += fmt.Sprintf(` "$(cat %s)"`, skillPath)
