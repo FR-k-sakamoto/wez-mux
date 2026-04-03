@@ -3,33 +3,10 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
-
-const defaultConfigYAML = `workspace: wez-mux
-layout:
-  rows:
-    - panes:
-        - label: analyzer
-          model: sonnet
-          skill: agent-analyzer
-          percent: 66
-        - label: designer
-          model: opus
-          skill: agent-designer
-          percent: 50
-    - panes:
-        - label: coder
-          model: sonnet
-          skill: agent-coder
-          percent: 50
-        - label: tester
-          model: haiku
-          skill: agent-tester
-          percent: 50
-  row_ratio: [50, 50]
-`
 
 type Config struct {
 	Workspace string       `yaml:"workspace"`
@@ -53,17 +30,44 @@ type PaneConfig struct {
 	Codex   bool   `yaml:"codex,omitempty"`
 }
 
+// findDefaultConfig looks for default.yaml in standard locations.
+func findDefaultConfig() string {
+	// 1. ~/.config/wez-mux/default.yaml
+	if home, err := os.UserHomeDir(); err == nil {
+		path := filepath.Join(home, ".config", "wez-mux", "default.yaml")
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	// 2. configs/default.yaml relative to executable
+	if exe, err := os.Executable(); err == nil {
+		path := filepath.Join(filepath.Dir(exe), "configs", "default.yaml")
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	// 3. configs/default.yaml relative to cwd
+	if cwd, err := os.Getwd(); err == nil {
+		path := filepath.Join(cwd, "configs", "default.yaml")
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	return ""
+}
+
 func Load(path string) (Config, error) {
-	var data []byte
-	var err error
+	if path == "" {
+		path = findDefaultConfig()
+	}
 
 	if path == "" {
-		data = []byte(defaultConfigYAML)
-	} else {
-		data, err = os.ReadFile(path)
-		if err != nil {
-			return Config{}, fmt.Errorf("read config %s: %w", path, err)
-		}
+		return Config{}, fmt.Errorf("no config file found. Use --config to specify one")
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return Config{}, fmt.Errorf("read config %s: %w", path, err)
 	}
 
 	var cfg Config
