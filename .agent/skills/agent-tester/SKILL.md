@@ -28,39 +28,50 @@ Unit テストは **Spec-Driven なテーブル駆動（Table-Driven Tests）** 
 
 **JS/TS（Vitest）:**
 ```typescript
-/** @see {@link add} */
-describe("add", () => {
+/** @see {@link getBusinessDaysInRange} */
+describe("getBusinessDaysInRange", () => {
   const TEST_CASES = [
-    { title: "正の整数同士を足し算できる", args: { augend: 2, addend: 3 }, expected: 5 },
-    { title: "負の数を足し算できる", args: { augend: -1, addend: -2 }, expected: -3 },
-    { title: "数値文字列を変換して計算できる", args: { augend: "2", addend: "3" }, expected: 5 },
-    { title: "変換不可能な文字列は null を返す", args: { augend: "abc", addend: 1 }, expected: null },
+    { title: "平日のみの期間で正しく営業日数を返す", args: { start: "2026-04-06", end: "2026-04-10" }, expected: 5 },
+    { title: "週末を含む期間で土日を除外する", args: { start: "2026-04-06", end: "2026-04-12" }, expected: 5 },
+    { title: "開始日と終了日が同じ平日なら1を返す", args: { start: "2026-04-06", end: "2026-04-06" }, expected: 1 },
+    { title: "開始日と終了日が同じ土曜なら0を返す", args: { start: "2026-04-11", end: "2026-04-11" }, expected: 0 },
+    { title: "開始日が終了日より後ならエラーを投げる", args: { start: "2026-04-10", end: "2026-04-06" }, expected: null },
   ];
 
   it.each(TEST_CASES)("$title", ({ args, expected }) => {
-    expect(add(args)).toBe(expected);
+    if (expected === null) {
+      expect(() => getBusinessDaysInRange(args.start, args.end)).toThrow();
+    } else {
+      expect(getBusinessDaysInRange(args.start, args.end)).toBe(expected);
+    }
   });
 });
 ```
 
 **Go:**
 ```go
-func TestAdd(t *testing.T) {
+func TestGetBusinessDaysInRange(t *testing.T) {
     tests := []struct {
         title    string
-        augend   int
-        addend   int
+        start    string
+        end      string
         expected int
+        wantErr  bool
     }{
-        {"正の整数同士を足し算できる", 2, 3, 5},
-        {"負の数を足し算できる", -1, -2, -3},
+        {"平日のみの期間で正しく営業日数を返す", "2026-04-06", "2026-04-10", 5, false},
+        {"週末を含む期間で土日を除外する", "2026-04-06", "2026-04-12", 5, false},
+        {"開始日と終了日が同じ平日なら1を返す", "2026-04-06", "2026-04-06", 1, false},
+        {"開始日が終了日より後ならエラーを返す", "2026-04-10", "2026-04-06", 0, true},
     }
     for _, tt := range tests {
         t.Run(tt.title, func(t *testing.T) {
-            got := Add(tt.augend, tt.addend)
-            if got != tt.expected {
-                t.Errorf("got %d, want %d", got, tt.expected)
+            got, err := GetBusinessDaysInRange(tt.start, tt.end)
+            if tt.wantErr {
+                if err == nil { t.Fatal("expected error but got nil") }
+                return
             }
+            if err != nil { t.Fatalf("unexpected error: %v", err) }
+            if got != tt.expected { t.Errorf("got %d, want %d", got, tt.expected) }
         })
     }
 }
